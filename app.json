@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Vocabcat",
+    "slug": "vocabcat",
+    "scheme": "vocabcat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow access to photos to attach screenshots to support requests."
+      }
+    }
+  }
+}

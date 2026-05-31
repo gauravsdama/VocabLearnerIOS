@@ -1,0 +1,65 @@
+name: iOS Build And Submit
+
+on:
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: "Submit the production build to App Store Connect"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+      APP_VARIANT: production
+      IOS_BUNDLE_IDENTIFIER: ${{ vars.IOS_BUNDLE_IDENTIFIER }}
+      APP_VERSION: ${{ vars.APP_VERSION }}
+      IOS_BUILD_NUMBER: ${{ vars.IOS_BUILD_NUMBER }}
+      IOS_SUPPORTS_TABLET: ${{ vars.IOS_SUPPORTS_TABLET }}
+      SUPPORT_URL: ${{ vars.SUPPORT_URL }}
+      PRIVACY_POLICY_URL: ${{ vars.PRIVACY_POLICY_URL }}
+      ASC_APP_ID: ${{ vars.ASC_APP_ID }}
+      EXPO_ASC_API_KEY_PATH: ${{ secrets.EXPO_ASC_API_KEY_PATH }}
+      EXPO_ASC_KEY_ID: ${{ secrets.EXPO_ASC_KEY_ID }}
+      EXPO_ASC_ISSUER_ID: ${{ secrets.EXPO_ASC_ISSUER_ID }}
+      EXPO_APPLE_TEAM_ID: ${{ secrets.EXPO_APPLE_TEAM_ID }}
+      EXPO_APPLE_TEAM_TYPE: ${{ secrets.EXPO_APPLE_TEAM_TYPE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate store assets if source artwork exists
+        run: |
+          if [ -f assets/source/icon-master.png ] && [ -f assets/source/splash-master.png ]; then
+            npm run assets:generate
+          else
+            echo "Skipping npm run assets:generate because assets/source/icon-master.png or assets/source/splash-master.png is missing."
+          fi
+
+      - name: Build iOS production
+        if: ${{ inputs.submit == 'false' }}
+        run: eas build --platform ios --profile production --non-interactive
+
+      - name: Build and submit iOS production
+        if: ${{ inputs.submit == 'true' }}
+        run: eas build --platform ios --profile production --non-interactive --auto-submit

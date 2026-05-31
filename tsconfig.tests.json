@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "outDir": ".tmp-test-dist",
+    "rootDir": ".",
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "app/api/types.ts",
+    "app/api/signing.ts",
+    "app/messages/messageUtils.ts",
+    "app/utils/sha256.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "tests/jest.setup.ts",
+    "**/*.jest.test.ts",
+    "**/*.jest.test.tsx"
+  ]
+}

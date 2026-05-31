@@ -1,0 +1,43 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "APP_VARIANT": "development"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "APP_VARIANT": "preview"
+      },
+      "ios": {
+        "image": "latest"
+      }
+    },
+    "production": {
+      "autoIncrement": "buildNumber",
+      "env": {
+        "APP_VARIANT": "production"
+      },
+      "ios": {
+        "image": "latest"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "${ASC_APP_ID}"
+      }
+    }
+  },
+  "metadata": {
+    "metadataPath": "./store.config.js"
+  }
+}
