@@ -1,7 +1,7 @@
 {
   "name": "vocabcat-ios",
   "version": "1.0.0",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "assets:generate": "node scripts/generate-assets.mjs",
     "screenshots:validate": "node scripts/validate-screenshots.mjs",
     "privacy:check": "node scripts/release-privacy-check.mjs",
+    "license:check": "node scripts/check-licensing.mjs",
     "copy:inventory": "node scripts/inventory-ui-copy.mjs --write",
     "copy:inventory:check": "node scripts/inventory-ui-copy.mjs",
     "ios:build:preview": "eas build --platform ios --profile preview",
@@ -22,7 +23,7 @@
     "test:e2e": "maestro test .maestro/smoke.yaml",
     "typecheck": "tsc --noEmit",
     "audit:prod": "npm audit --omit=dev",
-    "release:verify": "npm run test:unit && npm run test:component && npm run typecheck && npm run audit:prod && npm run privacy:check && npm run copy:inventory:check"
+    "release:verify": "npm run test:unit && npm run test:component && npm run typecheck && npm run audit:prod && npm run privacy:check && npm run copy:inventory:check && npm run license:check"
   },
   "dependencies": {
     "@expo-google-fonts/sora": "^0.2.0",

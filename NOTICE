@@ -1,5 +1,10 @@
 VocabCat iOS
 
-Copyright © 2026 Gaurav Dama. All rights reserved.
+Copyright 2026 Gaurav Dama
 
-Third-party software remains subject to its respective license terms.
+The original source code in this repository is licensed under the Apache
+License, Version 2.0. Third-party software and fonts remain subject to their
+respective license terms as listed in THIRD_PARTY_NOTICES.md.
+
+The VocabCat name, logo, icon, splash artwork, and mascot artwork are not
+licensed under Apache-2.0. See ASSET_LICENSE.md.

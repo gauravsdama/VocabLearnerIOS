@@ -106,3 +106,9 @@ Base: `{EXPO_PUBLIC_API_BASE_URL}/api/v1`
 - Question history for a word: `GET /study/progress/{word_id}/quiz-attempts?page=1&page_size=20`
 
 Important: don’t use `/stats/words` (it’s not part of the intended API). If the UI shows “This Week” vs “All Time”, “This Week” should be disabled for now or mapped to the same `/study/progress/list` call until a real week-scoped endpoint exists.
+
+## License
+
+The original source code is available under Apache-2.0. The VocabCat name and
+brand artwork remain reserved. See `LICENSE`, `NOTICE`, `ASSET_LICENSE.md`, and
+`THIRD_PARTY_NOTICES.md`.
