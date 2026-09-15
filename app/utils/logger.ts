@@ -26,9 +26,79 @@ const SENSITIVE_KEYS = new Set([
   "secret"
 ]);
 
+const SENSITIVE_QUERY_FRAGMENTS = [
+  "token",
+  "password",
+  "credential",
+  "authorization",
+  "code",
+  "key",
+  "secret",
+  "signature"
+];
+
+const looksSensitiveCodeKey = (normalized: string) => {
+  return (
+    normalized === "code" ||
+    normalized.endsWith("_code") ||
+    normalized.includes("authorization_code") ||
+    normalized.includes("verification_code") ||
+    normalized.includes("one_time_code")
+  );
+};
+
+const looksSensitiveKeyKey = (normalized: string) => {
+  return (
+    normalized === "key" ||
+    normalized.endsWith("_key") ||
+    normalized.includes("api_key") ||
+    normalized.includes("signing_key")
+  );
+};
+
 const shouldRedactKey = (key: string) => {
   const normalized = key.toLowerCase();
-  return SENSITIVE_KEYS.has(normalized) || normalized.includes("signature") || normalized.includes("secret");
+  return (
+    SENSITIVE_KEYS.has(normalized) ||
+    normalized.includes("token") ||
+    normalized.includes("password") ||
+    normalized.includes("credential") ||
+    normalized.includes("authorization") ||
+    normalized.includes("signature") ||
+    normalized.includes("secret") ||
+    looksSensitiveCodeKey(normalized) ||
+    looksSensitiveKeyKey(normalized)
+  );
+};
+
+const shouldRedactQueryKey = (key: string) => {
+  const normalized = key.toLowerCase();
+  return (
+    SENSITIVE_QUERY_FRAGMENTS.some((fragment) => normalized.includes(fragment)) ||
+    looksSensitiveCodeKey(normalized) ||
+    looksSensitiveKeyKey(normalized)
+  );
+};
+
+const redactUrl = (value: string) => {
+  if (!value.includes("?")) {
+    return value;
+  }
+  try {
+    const isAbsolute = /^[a-z][a-z0-9+.-]*:\/\//i.test(value);
+    const parsed = new URL(value, "https://redaction.local");
+    parsed.searchParams.forEach((paramValue, key) => {
+      if (shouldRedactQueryKey(key) && paramValue) {
+        parsed.searchParams.set(key, "[REDACTED]");
+      }
+    });
+    if (isAbsolute) {
+      return parsed.toString();
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return value;
+  }
 };
 
 export const redact = (value: unknown): unknown => {
@@ -48,6 +118,9 @@ export const redact = (value: unknown): unknown => {
   }
   if (typeof value === "string" && value.startsWith("Bearer ")) {
     return "Bearer [REDACTED]";
+  }
+  if (typeof value === "string") {
+    return redactUrl(value);
   }
   return value;
 };

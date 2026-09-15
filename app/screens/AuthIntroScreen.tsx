@@ -48,7 +48,7 @@ const AuthIntroScreen = ({ navigation }: Props) => {
     <ScreenContainer>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.navRow}>
-          <Text style={styles.brand}>Vocabcat</Text>
+          <Text style={styles.brand}>VocabCat</Text>
           <Pressable onPress={() => navigation.navigate("Login")} style={styles.navButton}>
             <Text style={[styles.navButtonText, typography.caption]}>Log in</Text>
           </Pressable>
@@ -59,7 +59,7 @@ const AuthIntroScreen = ({ navigation }: Props) => {
             <Text style={[styles.eyebrow, typography.label]}>Vocabulary that keeps moving</Text>
             <Text style={styles.title}>Build a word habit one focused swipe at a time.</Text>
             <Text style={[styles.lede, typography.body]}>
-              Vocabcat turns vocabulary practice into a short daily feed with context, recall checks, and progress you can understand at a glance.
+              VocabCat turns vocabulary practice into a short daily feed with context, recall checks, and progress you can understand at a glance.
             </Text>
             <DSButton
               label="Log in / Sign up"

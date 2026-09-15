@@ -22,6 +22,7 @@ import { useAuth } from "../auth/AuthContext";
 import { AuthStackParamList } from "../navigation/types";
 import { colors, spacing, radius } from "../theme/tokens";
 import { typography } from "../theme/typography";
+import { currentPolicyAcceptance } from "../auth/policy";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 
@@ -34,8 +35,15 @@ const RegisterScreen = ({ navigation }: Props) => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
+  const registrationBlocked = !ageConfirmed || !legalAccepted;
 
   const handleRegister = async () => {
+    if (registrationBlocked) {
+      setError("Confirm your age and accept the Terms of Use and Privacy Policy first.");
+      return;
+    }
     Keyboard.dismiss();
     setError(null);
     setLoading(true);
@@ -44,6 +52,7 @@ const RegisterScreen = ({ navigation }: Props) => {
         email: email.trim(),
         password,
         displayName: displayName.trim() || undefined,
+        ...currentPolicyAcceptance(),
       });
     } catch (err: any) {
       setError(err?.message || "Unable to register.");
@@ -53,10 +62,14 @@ const RegisterScreen = ({ navigation }: Props) => {
   };
 
   const handleGoogle = async () => {
+    if (registrationBlocked) {
+      setError("Confirm your age and accept the Terms of Use and Privacy Policy first.");
+      return;
+    }
     setError(null);
     setGoogleLoading(true);
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(currentPolicyAcceptance());
     } catch (err: any) {
       setError(err?.message || "Unable to continue with Google.");
     } finally {
@@ -65,10 +78,14 @@ const RegisterScreen = ({ navigation }: Props) => {
   };
 
   const handleApple = async () => {
+    if (registrationBlocked) {
+      setError("Confirm your age and accept the Terms of Use and Privacy Policy first.");
+      return;
+    }
     setError(null);
     setAppleLoading(true);
     try {
-      await signInWithApple();
+      await signInWithApple(currentPolicyAcceptance());
     } catch (err: any) {
       if (err?.code === "ERR_REQUEST_CANCELED") {
         return;
@@ -120,7 +137,29 @@ const RegisterScreen = ({ navigation }: Props) => {
                 autoComplete="password"
                 onSubmitEditing={() => void handleRegister()}
               />
-              <PrimaryButton label={loading ? "Creating..." : "Create Account"} onPress={handleRegister} disabled={loading} />
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: ageConfirmed }}
+                onPress={() => setAgeConfirmed((value) => !value)}
+                style={styles.consentRow}
+              >
+                <View style={[styles.checkbox, ageConfirmed && styles.checkboxChecked]}>
+                  <Text style={styles.checkmark}>{ageConfirmed ? "✓" : ""}</Text>
+                </View>
+                <Text style={[styles.consentText, typography.body]}>I confirm that I am at least 13 years old.</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: legalAccepted }}
+                onPress={() => setLegalAccepted((value) => !value)}
+                style={styles.consentRow}
+              >
+                <View style={[styles.checkbox, legalAccepted && styles.checkboxChecked]}>
+                  <Text style={styles.checkmark}>{legalAccepted ? "✓" : ""}</Text>
+                </View>
+                <Text style={[styles.consentText, typography.body]}>I agree to the Terms of Use and Privacy Policy.</Text>
+              </Pressable>
+              <PrimaryButton label={loading ? "Creating..." : "Create Account"} onPress={handleRegister} disabled={loading || registrationBlocked} />
               {loading && <ActivityIndicator style={styles.spinner} color={colors.primary} />}
               <View style={styles.dividerRow}>
                 <View style={styles.dividerLine} />
@@ -130,14 +169,17 @@ const RegisterScreen = ({ navigation }: Props) => {
               <PrimaryButton
                 label={googleLoading ? "Connecting Google..." : "Continue with Google"}
                 onPress={handleGoogle}
-                disabled={googleLoading || loading || appleLoading}
+                disabled={googleLoading || loading || appleLoading || registrationBlocked}
               />
               {Platform.OS === "ios" ? (
                 <AppleAuthentication.AppleAuthenticationButton
                   buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
                   buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
                   cornerRadius={radius.rBtn}
-                  style={styles.appleButton}
+                  style={[
+                    styles.appleButton,
+                    (registrationBlocked || googleLoading || loading || appleLoading) && styles.appleButtonDisabled
+                  ]}
                   onPress={() => void handleApple()}
                 />
               ) : null}
@@ -203,6 +245,36 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 52,
     marginTop: spacing.s1
+  },
+  appleButtonDisabled: {
+    opacity: 0.5
+  },
+  consentRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.s2,
+    paddingVertical: spacing.s1
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary
+  },
+  checkmark: {
+    color: colors.surface,
+    fontWeight: "700"
+  },
+  consentText: {
+    color: colors.text,
+    flex: 1
   }
 });
 

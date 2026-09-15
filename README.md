@@ -1,11 +1,11 @@
-# Vocabcat (iOS)
+# VocabCat (iOS)
 
 ## Setup
 
-1. Install dependencies:
+1. Install the locked dependencies (Node 22 is the CI baseline):
 
 ```bash
-npm install
+npm ci
 ```
 
 2. Copy `.env.example` to `.env.local` and configure local values as needed:
@@ -85,7 +85,7 @@ In-app health check (no new UI screens):
 
 - Client logs are written to Metro/device logs with stable `FE_LOG_ID` tags.
 - Set `EXPO_PUBLIC_TRACE_UI=true` to enable the in-app Diagnostics screen (dev only).
-- Do not declare the app launch-safe until the current production dependency audit findings are remediated or explicitly accepted.
+- Run `npm run release:verify` before sharing a build or publishing a branch.
 
 ## Notes
 

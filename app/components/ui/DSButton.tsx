@@ -98,7 +98,8 @@ const styles = StyleSheet.create({
     borderColor: "transparent"
   },
   gradient: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    inset: 0,
     borderRadius: radius.rBtn
   },
   label: {

@@ -57,6 +57,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   const plugins: ExpoPlugin[] = [
     "expo-apple-authentication",
+    "expo-font",
+    "expo-secure-store",
+    "expo-status-bar",
     [
       "expo-splash-screen",
       {
@@ -85,7 +88,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   return {
     ...config,
-    name: config.name ?? "Vocabcat",
+    name: config.name ?? "VocabCat",
     slug: config.slug ?? "vocabcat",
     scheme: appIosScheme,
     version: appVersion,
@@ -101,7 +104,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       buildNumber: iosBuildNumber,
       infoPlist: {
         ...config.ios?.infoPlist,
-        NSPhotoLibraryUsageDescription: "Allow access to photos to attach screenshots to support requests.",
         // IMPORTANT: This declares that the app does not use non-exempt encryption.
         // Keep this only if encryption is limited to exempt OS-provided capabilities
         // such as HTTPS/TLS through Apple system frameworks. Remove or change this

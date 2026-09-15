@@ -17,7 +17,7 @@ const MainNavigator = () => {
         headerTitleAlign: "center"
       }}
     >
-      <Stack.Screen name="Home" component={HomeScreen} options={{ title: "Vocabcat" }} />
+      <Stack.Screen name="Home" component={HomeScreen} options={{ title: "VocabCat" }} />
       <Stack.Screen name="Feed" component={FeedScreen} options={{ headerShown: false, gestureEnabled: true }} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: "Configure" }} />
       <Stack.Screen name="Stats" component={StatsScreen} options={{ title: "Stats & Summary" }} />

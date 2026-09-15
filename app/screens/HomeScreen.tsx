@@ -44,7 +44,7 @@ const HomeScreen = ({ navigation }: Props) => {
     <ScreenContainer>
       <View style={styles.headerRow}>
         <View>
-          <Text style={styles.brand}>Vocabcat</Text>
+          <Text style={styles.brand}>VocabCat</Text>
           <Text style={[styles.title, typography.h2]}>Choose your next move.</Text>
         </View>
         <Pressable onPress={() => void signOut()} style={styles.logoutButton}>

@@ -99,9 +99,22 @@ const normalizeHeaders = (headers?: HeadersInit) => {
   return { ...(headers as Record<string, string>) };
 };
 
-const sanitizeBody = (body?: BodyInit | null) => {
+const shouldOmitRequestBodyFromLogs = (path: string) => {
+  const normalized = normalizeApiPath(path);
+  return normalized.startsWith("/auth/");
+};
+
+const sanitizeLogUrl = (url: string) => {
+  const sanitized = redact(url);
+  return typeof sanitized === "string" ? sanitized : url;
+};
+
+const sanitizeBody = (path: string, body?: BodyInit | null) => {
   if (!body) {
     return undefined;
+  }
+  if (shouldOmitRequestBodyFromLogs(path)) {
+    return "[OMITTED]";
   }
   if (typeof body === "string") {
     try {
@@ -109,9 +122,6 @@ const sanitizeBody = (body?: BodyInit | null) => {
     } catch {
       return body.length > 200 ? `${body.slice(0, 200)}...` : body;
     }
-  }
-  if (body instanceof FormData) {
-    return "[FormData]";
   }
   return "[Body]";
 };
@@ -223,7 +233,6 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const clientRequestId = generateRequestId();
   const startTime = Date.now();
-  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const hasBody = options.body !== undefined && options.body !== null;
   const method = (options.method || "GET").toUpperCase();
   const token = behavior.omitAuth ? null : getAccessToken();
@@ -244,13 +253,8 @@ export async function apiFetch<T>(
 
   headers.Accept = "application/json";
 
-  if (hasBody && !isFormData && !("Content-Type" in headers) && !("content-type" in headers)) {
+  if (hasBody && !("Content-Type" in headers) && !("content-type" in headers)) {
     headers["Content-Type"] = "application/json";
-  }
-
-  if (isFormData) {
-    delete headers["Content-Type"];
-    delete headers["content-type"];
   }
 
   if (token) {
@@ -260,13 +264,14 @@ export async function apiFetch<T>(
   Object.assign(headers, signatureHeaders);
 
   const url = buildUrl(path);
+  const sanitizedUrl = sanitizeLogUrl(url);
   const sanitizedHeaders = redact(normalizeHeaders(headers));
-  const sanitizedBody = sanitizeBody(options.body);
+  const sanitizedBody = sanitizeBody(path, options.body);
   const requestLogData = {
     client_request_id: clientRequestId,
     server_request_id: null,
     method,
-    url,
+    url: sanitizedUrl,
     status: null,
     duration_ms: null,
     request: {
@@ -295,7 +300,7 @@ export async function apiFetch<T>(
       client_request_id: clientRequestId,
       server_request_id: serverRequestId,
       method,
-      url,
+      url: sanitizedUrl,
       status: response.status,
       duration_ms: duration
     };
@@ -375,7 +380,7 @@ export async function apiFetch<T>(
         client_request_id: clientRequestId,
         server_request_id: error?.requestId || null,
         method,
-        url,
+        url: sanitizedUrl,
         status: error?.status ?? null,
         duration_ms: duration,
         error_code: error?.code,

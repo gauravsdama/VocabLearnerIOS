@@ -9,15 +9,15 @@ This checklist covers the packaging and compliance work needed to prepare the Ex
 | Critical | EAS config | Done | `eas.json` has development, preview, production, submit, and metadata profiles. |
 | Critical | App identity config | Done | `app.config.ts` reads bundle ID, app version, build number, support URL, and privacy policy URL from environment variables. |
 | Critical | Version/build strategy | Done | `cli.appVersionSource` is `remote`; production uses `autoIncrement: "buildNumber"`. |
-| Critical | Apple SDK posture | Done | iOS preview and production profiles use EAS image `latest`. |
-| High | Icon and splash wiring | Done | `app.config.ts` points to `assets/images/icon.png` and `assets/images/splash-icon.png`; generation script added. |
+| Critical | Apple SDK posture | Done | iOS preview and production profiles pin `macos-tahoe-26.5-xcode-26.6`, Expo's SDK 57 image at review time. |
+| High | Icon and splash wiring | Blocked | Config and generation are ready, but the owner-provided master artwork is not present in any inspected checkout. |
 | High | Screenshot directories | Done | Required screenshot folders exist under `assets/appstore/screenshots/en-US/`. |
 | High | Screenshot validation | Done | `npm run screenshots:validate` checks iPhone 6.9 and iPad 13 portrait sizes. |
 | High | Privacy/support links | Done | `SUPPORT_URL` and `PRIVACY_POLICY_URL` are required in production and exposed in `extra`. |
 | High | Privacy manifest support | Done | `ios.privacyManifests` is configured as a minimal starting point. |
 | High | Export compliance default | Done | `ITSAppUsesNonExemptEncryption=false` is set with an in-code warning to change it if non-exempt encryption is used. |
 | Medium | Store metadata scaffold | Done | `store.config.js` reads App Store metadata and required URLs from env. |
-| Medium | CI workflow | Done | `.github/workflows/ios-build-and-submit.yml` builds and can auto-submit production builds. |
+| Medium | CI workflow | Done | The manual workflow pins its actions, Node, EAS CLI, and build image; tests, types, dependency audit, privacy guard, assets, and screenshots run before build or submit. |
 | Manual | App Store Connect setup | Pending | App record, privacy questionnaire, export compliance, screenshots, and reviewer notes are completed in App Store Connect. |
 | Manual | TestFlight validation | Pending | Build is uploaded, tester info is configured, and the app works on a fresh install. |
 
@@ -111,7 +111,7 @@ Support page should include:
 
 ```text
 Contact: support@example.com
-Product: vocabcat
+Product: VocabCat
 Response window: We usually respond within 2 business days.
 Account help: Include the email address associated with your account.
 ```
@@ -203,4 +203,4 @@ When the workflow input `submit=true`, it runs:
 eas build --platform ios --profile production --non-interactive --auto-submit
 ```
 
-The workflow skips asset generation when source artwork is absent, so CI can still validate the EAS setup before final artwork is committed.
+The workflow stops before a build when required source artwork or screenshots are absent. GitHub publication does not require a store build; App Store submission does.

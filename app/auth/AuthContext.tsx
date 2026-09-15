@@ -29,6 +29,7 @@ import {
   setRefreshToken
 } from "../utils/storage";
 import { iosAppConfig } from "../config";
+import type { PolicyAcceptance } from "./policy";
 
 type AuthContextValue = {
   token: string | null;
@@ -36,9 +37,9 @@ type AuthContextValue = {
   loading: boolean;
   needsEmailVerification: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (input: { email: string; password: string; displayName?: string }) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  signInWithApple: () => Promise<void>;
+  signUp: (input: { email: string; password: string; displayName?: string } & PolicyAcceptance) => Promise<void>;
+  signInWithGoogle: (acceptance?: PolicyAcceptance) => Promise<void>;
+  signInWithApple: (acceptance?: PolicyAcceptance) => Promise<void>;
   resendVerification: () => Promise<ResendEmailVerificationResponse>;
   verifyEmailCode: (code: string) => Promise<VerifyEmailResponse>;
   forgotPassword: (email: string) => Promise<string>;
@@ -202,10 +203,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await applySession(response);
   }, [applySession]);
 
-  const signUp = useCallback(async ({ email, password, displayName }: { email: string; password: string; displayName?: string }) => {
+  const signUp = useCallback(async ({ email, password, displayName, ...acceptance }: { email: string; password: string; displayName?: string } & PolicyAcceptance) => {
     const payload: RegisterRequest = {
       email,
       password,
+      ...acceptance,
       ...(displayName ? { display_name: displayName } : {})
     };
     const response = await apiFetch<AuthResponse>(
@@ -227,8 +229,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await applySession(response);
   }, [applySession]);
 
-  const authenticateWithGoogleIdToken = useCallback(async (idToken: string) => {
-    const payload: GoogleAuthRequest = { id_token: idToken };
+  const authenticateWithGoogleIdToken = useCallback(async (idToken: string, acceptance?: PolicyAcceptance) => {
+    const payload: GoogleAuthRequest = { id_token: idToken, ...acceptance };
     const response = await apiFetch<AuthResponse>(
       "/auth/google",
       {
@@ -248,17 +250,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await applySession(response);
   }, [applySession]);
 
-  const signInWithGoogle = useCallback(async () => {
+  const signInWithGoogle = useCallback(async (acceptance?: PolicyAcceptance) => {
     const googleResponse: any = await GoogleSignin.signIn();
     const googleData = googleResponse?.data ?? googleResponse;
     const idToken = googleData?.idToken ?? googleResponse?.idToken;
     if (!idToken) {
       throw new Error("Google did not return an ID token.");
     }
-    await authenticateWithGoogleIdToken(idToken);
+    await authenticateWithGoogleIdToken(idToken, acceptance);
   }, [authenticateWithGoogleIdToken]);
 
-  const signInWithApple = useCallback(async () => {
+  const signInWithApple = useCallback(async (acceptance?: PolicyAcceptance) => {
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [
         AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -271,9 +273,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const payload: AppleAuthRequest = {
       identity_token: credential.identityToken,
       authorization_code: credential.authorizationCode ?? null,
-      email: credential.email ?? null,
       given_name: credential.fullName?.givenName ?? null,
       family_name: credential.fullName?.familyName ?? null,
+      ...acceptance,
     };
     const response = await apiFetch<AuthResponse>(
       "/auth/apple",

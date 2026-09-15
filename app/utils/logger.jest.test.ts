@@ -7,8 +7,12 @@ describe("logger redaction", () => {
       nested: {
         refresh_token: "refresh-secret",
         signature: "deadbeef",
+        identity_token: "apple-token",
+        authorization_code: "apple-code",
+        new_password: "new-password",
       },
       safe: "ok",
+      url: "/auth/verify-email?token=verify-token&code=123456",
     });
 
     expect(result).toEqual({
@@ -16,8 +20,12 @@ describe("logger redaction", () => {
       nested: {
         refresh_token: "[REDACTED]",
         signature: "[REDACTED]",
+        identity_token: "[REDACTED]",
+        authorization_code: "[REDACTED]",
+        new_password: "[REDACTED]",
       },
       safe: "ok",
+      url: "/auth/verify-email?token=%5BREDACTED%5D&code=%5BREDACTED%5D",
     });
   });
 

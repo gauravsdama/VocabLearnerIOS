@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Keyboard,
   KeyboardAvoidingView,
   Linking,
@@ -16,9 +15,6 @@ import {
   View
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import * as ImagePicker from "expo-image-picker";
-import * as ImageManipulator from "expo-image-manipulator";
-import * as FileSystem from "expo-file-system";
 import ScreenContainer from "../components/ScreenContainer";
 import PrimaryButton from "../components/PrimaryButton";
 import InlineError from "../components/InlineError";
@@ -35,7 +31,6 @@ import { typography } from "../theme/typography";
 type Props = NativeStackScreenProps<MainStackParamList, "Settings">;
 
 const showTraceUi = process.env.EXPO_PUBLIC_TRACE_UI === "true";
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const FALLBACK_TIMEZONE = "UTC";
 const MIN_WORDS_PER_WEEK = 5;
 const MAX_WORDS_PER_WEEK = 210;
@@ -44,19 +39,9 @@ const MAX_TEXTS_PER_WEEK = 14;
 const DEFAULT_WORDS_PER_WEEK = 20;
 const DEFAULT_TEXTS_PER_WEEK = 3;
 
-type HelpCategory = "bug" | "billing" | "content" | "account" | "other";
+type HelpCategory = "bug" | "content" | "account" | "other";
 type HelpSeverity = "low" | "medium" | "high";
-type HelpAttachment = {
-  uri: string;
-  name: string;
-  type: string;
-  size?: number;
-  width?: number;
-  height?: number;
-  optimized?: boolean;
-};
-
-const helpCategories: HelpCategory[] = ["bug", "billing", "content", "account", "other"];
+const helpCategories: HelpCategory[] = ["bug", "content", "account", "other"];
 const helpSeverities: HelpSeverity[] = ["low", "medium", "high"];
 
 const clampInteger = (value: number, min: number, max: number) => {
@@ -99,7 +84,6 @@ const SettingsScreen = ({ navigation }: Props) => {
   const [helpDescription, setHelpDescription] = useState("");
   const [helpCategory, setHelpCategory] = useState<HelpCategory>("other");
   const [helpSeverity, setHelpSeverity] = useState<HelpSeverity>("low");
-  const [helpScreenshot, setHelpScreenshot] = useState<HelpAttachment | null>(null);
   const [helpSubmitting, setHelpSubmitting] = useState(false);
   const [helpError, setHelpError] = useState<string | null>(null);
   const [helpRequestId, setHelpRequestId] = useState<string | null>(null);
@@ -319,105 +303,6 @@ const SettingsScreen = ({ navigation }: Props) => {
     }
   };
 
-  const getAssetSize = async (asset: ImagePicker.ImagePickerAsset) => {
-    if (typeof asset.fileSize === "number") {
-      return asset.fileSize;
-    }
-    try {
-      const info = (await FileSystem.getInfoAsync(asset.uri)) as FileSystem.FileInfo & { size?: number };
-      if (typeof info.size === "number") {
-        return info.size;
-      }
-    } catch {
-      // ignore size lookup failures
-    }
-    return 0;
-  };
-
-  const optimizeScreenshot = async (asset: ImagePicker.ImagePickerAsset) => {
-    const size = await getAssetSize(asset);
-    if (size > 0 && size <= MAX_UPLOAD_BYTES) {
-      return {
-        uri: asset.uri,
-        name: asset.fileName || "screenshot.jpg",
-        type: asset.mimeType || "image/jpeg",
-        size,
-        width: asset.width,
-        height: asset.height,
-        optimized: false
-      };
-    }
-
-    const baseWidth = asset.width || 1600;
-    const ratio = size > 0 ? Math.min(1, Math.max(0.4, Math.sqrt(MAX_UPLOAD_BYTES / size))) : 0.8;
-    const targetWidth = Math.max(640, Math.round(baseWidth * ratio));
-    const firstPass = await ImageManipulator.manipulateAsync(
-      asset.uri,
-      [{ resize: { width: targetWidth } }],
-      { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
-    );
-    let finalAsset = firstPass;
-    let finalSize = 0;
-    try {
-      const info = (await FileSystem.getInfoAsync(firstPass.uri)) as FileSystem.FileInfo & { size?: number };
-      finalSize = typeof info.size === "number" ? info.size : 0;
-    } catch {
-      finalSize = 0;
-    }
-
-    if (finalSize > MAX_UPLOAD_BYTES) {
-      const secondPass = await ImageManipulator.manipulateAsync(
-        firstPass.uri,
-        [{ resize: { width: Math.round(targetWidth * 0.8) } }],
-        { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
-      );
-      finalAsset = secondPass;
-      try {
-        const info = (await FileSystem.getInfoAsync(secondPass.uri)) as FileSystem.FileInfo & { size?: number };
-        finalSize = typeof info.size === "number" ? info.size : finalSize;
-      } catch {
-        // ignore
-      }
-    }
-
-    if (finalSize > MAX_UPLOAD_BYTES) {
-      throw new Error("Screenshot is still above 5MB after compression. Choose a smaller image.");
-    }
-
-    return {
-      uri: finalAsset.uri,
-      name: asset.fileName || "screenshot.jpg",
-      type: "image/jpeg",
-      size: finalSize,
-      width: finalAsset.width,
-      height: finalAsset.height,
-      optimized: true
-    };
-  };
-
-  const handlePickScreenshot = async () => {
-    setHelpError(null);
-    setHelpRequestId(null);
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setHelpError("Allow photo access to attach a screenshot.");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1
-    });
-    if (result.canceled || !result.assets?.length) {
-      return;
-    }
-    try {
-      const optimized = await optimizeScreenshot(result.assets[0]);
-      setHelpScreenshot(optimized);
-    } catch (err: any) {
-      setHelpError(err?.message || "Unable to attach screenshot.");
-    }
-  };
-
   const handleSubmitHelp = async () => {
     setHelpError(null);
     setHelpRequestId(null);
@@ -432,30 +317,21 @@ const SettingsScreen = ({ navigation }: Props) => {
       setHelpError("Description must be between 10 and 4000 characters.");
       return;
     }
-    const form = new FormData();
-    form.append("title", trimmedTitle);
-    form.append("description", trimmedDescription);
-    form.append("category", helpCategory);
-    form.append("severity", helpSeverity);
-    form.append(
-      "client_info",
-      JSON.stringify({
+    const requestBody = {
+      title: trimmedTitle,
+      description: trimmedDescription,
+      category: helpCategory,
+      severity: helpSeverity,
+      client_info: {
         platform: Platform.OS,
         platformVersion: Platform.Version
-      })
-    );
-    if (helpScreenshot) {
-      form.append("screenshot", {
-        uri: helpScreenshot.uri,
-        name: helpScreenshot.name,
-        type: helpScreenshot.type
-      } as unknown as Blob);
-    }
+      }
+    };
     setHelpSubmitting(true);
     try {
       const response = await apiFetch<HelpIssueResponse>("/help/issues", {
         method: "POST",
-        body: form
+        body: JSON.stringify(requestBody)
       }, {
         startId: "IOS_HELP_CREATE_START",
         okId: "IOS_HELP_CREATE_OK",
@@ -464,7 +340,6 @@ const SettingsScreen = ({ navigation }: Props) => {
       setHelpSuccess(`Issue ${response.id} submitted. We'll follow up soon.`);
       setHelpTitle("");
       setHelpDescription("");
-      setHelpScreenshot(null);
     } catch (err: any) {
       const errorMessage = err?.message || "Unable to submit issue.";
       if (err instanceof ApiError && err.retryAfterSeconds) {
@@ -638,7 +513,7 @@ const SettingsScreen = ({ navigation }: Props) => {
           <DSCard style={styles.card}>
             <Text style={[styles.sectionTitle, typography.h2]}>Help & Issue Reporting</Text>
             <Text style={[styles.helperText, typography.body]}>
-              Send an issue directly to support. Attach a screenshot if helpful.
+              Send an issue directly to support.
             </Text>
             {helpError ? <Text style={[styles.errorText, typography.caption]}>{helpError}</Text> : null}
             {helpRequestId ? (
@@ -719,44 +594,6 @@ const SettingsScreen = ({ navigation }: Props) => {
                     </Text>
                   </Pressable>
                 ))}
-              </View>
-            </View>
-
-            <View style={styles.field}>
-              <Text style={[styles.label, typography.label]}>Screenshot (optional)</Text>
-              <View style={styles.screenshotRow}>
-                {helpScreenshot ? (
-                  <Image source={{ uri: helpScreenshot.uri }} style={styles.screenshotPreview} />
-                ) : (
-                  <View style={styles.screenshotPlaceholder}>
-                    <Text style={[styles.helperText, typography.caption]}>No screenshot selected.</Text>
-                  </View>
-                )}
-                <View style={styles.screenshotMeta}>
-                  {helpScreenshot ? (
-                    <>
-                      <Text style={[styles.helperText, typography.caption]}>{helpScreenshot.name}</Text>
-                      {typeof helpScreenshot.size === "number" ? (
-                        <Text style={[styles.helperText, typography.caption]}>
-                          {(helpScreenshot.size / (1024 * 1024)).toFixed(2)} MB
-                        </Text>
-                      ) : null}
-                      {helpScreenshot.optimized ? (
-                        <Text style={[styles.helperText, typography.caption]}>Optimized to fit 5MB.</Text>
-                      ) : null}
-                    </>
-                  ) : null}
-                  <View style={styles.screenshotActions}>
-                    <DSButton
-                      label={helpScreenshot ? "Replace" : "Add screenshot"}
-                      variant="secondary"
-                      onPress={() => void handlePickScreenshot()}
-                    />
-                    {helpScreenshot ? (
-                      <DSButton label="Remove" variant="ghost" onPress={() => setHelpScreenshot(null)} />
-                    ) : null}
-                  </View>
-                </View>
               </View>
             </View>
 
@@ -896,38 +733,6 @@ const styles = StyleSheet.create({
   optionTextActive: {
     color: colors.primary,
     fontWeight: "600"
-  },
-  screenshotRow: {
-    flexDirection: "row",
-    gap: spacing.s2,
-    alignItems: "flex-start"
-  },
-  screenshotPreview: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.rBtn,
-    backgroundColor: colors.surface2,
-    resizeMode: "cover"
-  },
-  screenshotPlaceholder: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.rBtn,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.s1,
-    backgroundColor: colors.surface2
-  },
-  screenshotMeta: {
-    flex: 1,
-    gap: spacing.s1
-  },
-  screenshotActions: {
-    flexDirection: "row",
-    gap: spacing.s1,
-    alignItems: "center"
   },
   helpRow: {
     marginTop: spacing.s2,

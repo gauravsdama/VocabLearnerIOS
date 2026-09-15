@@ -37,7 +37,6 @@ export type HelpIssueResponse = {
   id: string;
   status: string;
   created_at: string;
-  screenshot_url?: string;
 };
 
 export type FeedPrefs = Record<string, unknown>;
@@ -91,18 +90,26 @@ export type LoginRequest = {
 
 export type RegisterRequest = LoginRequest & {
   display_name?: string;
+  minimum_age_confirmed: boolean;
+  terms_version: string;
+  privacy_version: string;
 };
 
 export type GoogleAuthRequest = {
   id_token: string;
+  minimum_age_confirmed?: boolean;
+  terms_version?: string;
+  privacy_version?: string;
 };
 
 export type AppleAuthRequest = {
   identity_token: string;
   authorization_code?: string | null;
-  email?: string | null;
   given_name?: string | null;
   family_name?: string | null;
+  minimum_age_confirmed?: boolean;
+  terms_version?: string;
+  privacy_version?: string;
 };
 
 export type RefreshRequest = {

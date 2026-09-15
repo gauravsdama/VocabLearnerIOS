@@ -4,6 +4,7 @@
     "strict": true,
     "noImplicitAny": false,
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "types": ["jest", "node"],
     "paths": {
       "@/*": ["app/*"]

@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 12.0.0",
+    "version": "24.6.0",
     "appVersionSource": "remote"
   },
   "build": {
@@ -17,7 +17,7 @@
         "APP_VARIANT": "preview"
       },
       "ios": {
-        "image": "latest"
+        "image": "macos-tahoe-26.5-xcode-26.6"
       }
     },
     "production": {
@@ -26,7 +26,7 @@
         "APP_VARIANT": "production"
       },
       "ios": {
-        "image": "latest"
+        "image": "macos-tahoe-26.5-xcode-26.6"
       }
     }
   },
