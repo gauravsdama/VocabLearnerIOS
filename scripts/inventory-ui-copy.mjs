@@ -10,7 +10,7 @@ const startMarker = "<!-- BEGIN VERIFIED SOURCE COPY -->";
 const endMarker = "<!-- END VERIFIED SOURCE COPY -->";
 const attributeNames = new Set([
   "accessibilityHint", "accessibilityLabel", "alt", "aria-label", "aria-description",
-  "description", "errorText", "helperText", "label", "message", "placeholder", "subtitle", "title", "tooltip",
+  "description", "effectiveDate", "errorText", "helperText", "label", "message", "placeholder", "subtitle", "title", "tooltip",
 ]);
 const propertyNames = new Set([
   "accessibilityHint", "accessibilityLabel", "action_label", "alt", "body", "description",
